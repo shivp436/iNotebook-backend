@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import colors from 'colors';  // Import colors library
+import colors from 'colors'; // Import colors library
 
 const connectDB = async (): Promise<void> => {
   try {
@@ -9,7 +9,9 @@ const connectDB = async (): Promise<void> => {
 
     const conn = await mongoose.connect(process.env.MONGO_URI);
 
-    console.log(colors.cyan.underline(`MongoDB Connected: ${conn.connection.host}`));
+    console.log(
+      colors.cyan.underline(`MongoDB Connected: ${conn.connection.host}`)
+    );
   } catch (error) {
     if (error instanceof Error) {
       console.error(colors.red(`Error: ${error.message}`));
@@ -18,6 +20,6 @@ const connectDB = async (): Promise<void> => {
     }
     process.exit(1);
   }
-}
+};
 
 export { connectDB };

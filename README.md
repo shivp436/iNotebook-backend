@@ -1,0 +1,2 @@
+- [x] Add Linting & Prettier Rules
+- [x] Add Husky pre-commit

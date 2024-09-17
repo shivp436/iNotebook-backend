@@ -7,9 +7,9 @@ connectDB();
 
 const app = express();
 const port = Number(
-	process.env.NODE_ENV === 'development'
-		? process.env.DEV_PORT || 3000
-		: process.env.PROD_PORT || 5000
+  process.env.NODE_ENV === 'development'
+    ? process.env.DEV_PORT || 3000
+    : process.env.PROD_PORT || 5000
 );
 
 // middlewares
@@ -21,5 +21,5 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.listen(port, () => {
-	console.log(`Server is running at http://localhost:${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });
