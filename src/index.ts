@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import { connectDB } from './config/db';
 
+// routes import
+import userRoutes from './routes/userRoutes';
+
 dotenv.config();
 connectDB();
 
@@ -19,6 +22,11 @@ app.use(express.urlencoded({ extended: false }));
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World');
 });
+
+// routes
+// app.use('/api/notes', require('./routes/noteRoutes'));
+app.use('/i-notebook/api/v1/user', userRoutes);
+// app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
