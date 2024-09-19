@@ -123,94 +123,88 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
 // @route POST /api/users/login
 // @access Public
 const loginUser = asyncHandler(
-	async (req: Request, res: Response): Promise<void> => {
-		try {
-			const { email, password } = req.body;
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { email, password } = req.body;
 
-			if (!email || !password) {
-				respond(res, 401, 'error', 'Invalid credentials');
-				return;
-			}
+      if (!email || !password) {
+        respond(res, 401, 'error', 'Invalid credentials');
+        return;
+      }
 
-			// Find the user by email
-			const user = await User.findOne({ email });
-			if (!user) {
-				respond(res, 401, 'error', 'Invalid credentials');
-				return;
-			}
+      // Find the user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        respond(res, 401, 'error', 'Invalid credentials');
+        return;
+      }
 
-			// Compare passwords
-			const isMatch = await bcrypt.compare(password, user.password);
-			if (!isMatch) {
-				respond(res, 401, 'error', 'Invalid credentials');
-				return;
-			}
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        respond(res, 401, 'error', 'Invalid credentials');
+        return;
+      }
 
-			respond(res, 200, 'success', 'Login successful', {
-				_user: {
-					_id: user._id,
+      respond(res, 200, 'success', 'Login successful', {
+        _user: {
+          _id: user._id,
           name: user.name,
-					userName: user.userName,
-					email: user.email,
-					avatar: user.avatar,
-				},
-				_token: generateToken((user._id as unknown as string).toString()),
-			});
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				respond(res, 500, 'error', 'Error logging in', {
+          userName: user.userName,
+          email: user.email,
+          avatar: user.avatar,
+        },
+        _token: generateToken((user._id as unknown as string).toString()),
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        respond(res, 500, 'error', 'Error logging in', {
           _error: error.message,
         });
-			} else {
-				respond(res, 500, 'error', 'Unknown error occurred');
-			}
-		}
-	}
+      } else {
+        respond(res, 500, 'error', 'Unknown error occurred');
+      }
+    }
+  }
 );
 
 // @desc Get user profile
 // @route GET /api/users/me
 // @access Private
 const getMyProfile = asyncHandler(
-	async (req: AuthenticatedRequest, res: Response) => {
-		try {
-			const user = req.user;
-			const newToken = req.newToken;
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = req.user;
+      const newToken = req.newToken;
 
-			if (user) {
-				respond(
-					res,
-					200,
-					'success',
-					'User profile retrieved successfully',
-					{
-						_user: {
-							_id: user._id,
-							userName: user.userName,
-							email: user.email,
-							name: user.name,
-							avatar: user.avatar,
-						},
-						_token: newToken,
-					}
-				);
-			} else {
-				respond(res, 404, 'error', 'User not found');
-			}
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				respond(
-					res,
-					500,
-					'error',
-					'Error fetching user profile',
-					error.message
-				);
-			} else {
-				respond(res, 500, 'error', 'Unknown error occurred');
-			}
-		}
-	}
+      if (user) {
+        respond(res, 200, 'success', 'User profile retrieved successfully', {
+          _user: {
+            _id: user._id,
+            userName: user.userName,
+            email: user.email,
+            name: user.name,
+            avatar: user.avatar,
+          },
+          _token: newToken,
+        });
+      } else {
+        respond(res, 404, 'error', 'User not found');
+      }
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        respond(
+          res,
+          500,
+          'error',
+          'Error fetching user profile',
+          error.message
+        );
+      } else {
+        respond(res, 500, 'error', 'Unknown error occurred');
+      }
+    }
+  }
 );
 
 export { registerUser, loginUser, getMyProfile };
