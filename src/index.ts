@@ -4,6 +4,7 @@ import { connectDB } from './config/db';
 
 // routes import
 import userRoutes from './routes/userRoutes';
+import noteRoutes from './routes/noteRoutes';
 
 dotenv.config();
 connectDB();
@@ -24,7 +25,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // routes
-// app.use('/api/notes', require('./routes/noteRoutes'));
+app.use('/i-notebook/api/v1/note', noteRoutes);
 app.use('/i-notebook/api/v1/user', userRoutes);
 // app.use('/api/auth', require('./routes/authRoutes'));
 

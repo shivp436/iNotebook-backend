@@ -112,10 +112,14 @@ const registerUser = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
-      respond(res, 500, 'error', error.message);
+      respond(res, 500, 'error', 'Error creating user', {
+        _error: error.message,
+      });
       return;
     }
-    respond(res, 500, 'error', 'Internal server error');
+    respond(res, 500, 'error', 'Internal server error', {
+      _error: error,
+    });
   }
 };
 
@@ -162,7 +166,9 @@ const loginUser = asyncHandler(
           _error: error.message,
         });
       } else {
-        respond(res, 500, 'error', 'Unknown error occurred');
+        respond(res, 500, 'error', 'Unknown error occurred', {
+          _error: error,
+        });
       }
     }
   }
@@ -193,15 +199,13 @@ const getMyProfile = asyncHandler(
       }
     } catch (error: unknown) {
       if (error instanceof Error) {
-        respond(
-          res,
-          500,
-          'error',
-          'Error fetching user profile',
-          error.message
-        );
+        respond(res, 500, 'error', 'Error fetching user profile', {
+          _error: error.message,
+        });
       } else {
-        respond(res, 500, 'error', 'Unknown error occurred');
+        respond(res, 500, 'error', 'Unknown error occurred', {
+          _error: error,
+        });
       }
     }
   }
