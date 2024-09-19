@@ -6,16 +6,22 @@ type ApiResponse = {
   code: number;
   message: string;
   data?: any;
-}
+};
 
-const sendResponse = (res: Response, statusCode: number, status: 'success' | 'error', message: string, data?: any) => {
+const sendResponse = (
+  res: Response,
+  statusCode: number,
+  status: 'success' | 'error',
+  message: string,
+  data?: any
+) => {
   const response: ApiResponse = {
     status,
     code: statusCode,
     message,
     data,
   };
-  
+
   res.status(200).json(response);
 };
 

@@ -1,8 +1,16 @@
 import { User, IUser } from '../models/User';
 import { Request, Response } from 'express';
-import { validateEmail, validateImageURL, validateName, validatePassword, validateUserName } from '../helpers/validators';
+import {
+  validateEmail,
+  validateImageURL,
+  validateName,
+  validatePassword,
+  validateUserName,
+} from '../helpers/validators';
 import bcrypt from 'bcryptjs';
 import respond from '../helpers/response';
+import { generateToken } from '../helpers/jwt';
+import asyncHandler from 'express-async-handler';
 
 // User Model
 // interface IUser {
@@ -15,14 +23,19 @@ import respond from '../helpers/response';
 //   updatedAt: Date;
 // }
 
+interface AuthenticatedRequest extends Request {
+  user?: any;
+  newToken?: string | undefined;
+}
+
 // access: public
 // method: POST
 // route: /api/users/register
 // description: Register a new user
-const registerUser = async (req: Request, res: Response) : Promise<void> => {
+const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, userName, email, password, password2, avatar } = req.body;
-    
+
     // validate user inputs
     if (!name || !userName || !email || !password || !password2) {
       respond(res, 400, 'error', 'All fields are required');
@@ -88,13 +101,14 @@ const registerUser = async (req: Request, res: Response) : Promise<void> => {
     }
 
     respond(res, 201, 'success', 'User created successfully', {
-      _user : {
-        _id : user._id,
-        name : user.name,
-        userName : user.userName,
-        email : user.email,
-        avatar : user.avatar,
+      _user: {
+        _id: user._id,
+        name: user.name,
+        userName: user.userName,
+        email: user.email,
+        avatar: user.avatar,
       },
+      _token: generateToken((user._id as unknown as string).toString()),
     });
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -103,9 +117,100 @@ const registerUser = async (req: Request, res: Response) : Promise<void> => {
     }
     respond(res, 500, 'error', 'Internal server error');
   }
-}
+};
 
-const loginUser = async (req: Request, res: Response) : Promise<void> => {
-}
+// @desc Login a user
+// @route POST /api/users/login
+// @access Public
+const loginUser = asyncHandler(
+	async (req: Request, res: Response): Promise<void> => {
+		try {
+			const { email, password } = req.body;
 
-export { registerUser, loginUser };
+			if (!email || !password) {
+				respond(res, 401, 'error', 'Invalid credentials');
+				return;
+			}
+
+			// Find the user by email
+			const user = await User.findOne({ email });
+			if (!user) {
+				respond(res, 401, 'error', 'Invalid credentials');
+				return;
+			}
+
+			// Compare passwords
+			const isMatch = await bcrypt.compare(password, user.password);
+			if (!isMatch) {
+				respond(res, 401, 'error', 'Invalid credentials');
+				return;
+			}
+
+			respond(res, 200, 'success', 'Login successful', {
+				_user: {
+					_id: user._id,
+          name: user.name,
+					userName: user.userName,
+					email: user.email,
+					avatar: user.avatar,
+				},
+				_token: generateToken((user._id as unknown as string).toString()),
+			});
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				respond(res, 500, 'error', 'Error logging in', {
+          _error: error.message,
+        });
+			} else {
+				respond(res, 500, 'error', 'Unknown error occurred');
+			}
+		}
+	}
+);
+
+// @desc Get user profile
+// @route GET /api/users/me
+// @access Private
+const getMyProfile = asyncHandler(
+	async (req: AuthenticatedRequest, res: Response) => {
+		try {
+			const user = req.user;
+			const newToken = req.newToken;
+
+			if (user) {
+				respond(
+					res,
+					200,
+					'success',
+					'User profile retrieved successfully',
+					{
+						_user: {
+							_id: user._id,
+							userName: user.userName,
+							email: user.email,
+							name: user.name,
+							avatar: user.avatar,
+						},
+						_token: newToken,
+					}
+				);
+			} else {
+				respond(res, 404, 'error', 'User not found');
+			}
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				respond(
+					res,
+					500,
+					'error',
+					'Error fetching user profile',
+					error.message
+				);
+			} else {
+				respond(res, 500, 'error', 'Unknown error occurred');
+			}
+		}
+	}
+);
+
+export { registerUser, loginUser, getMyProfile };

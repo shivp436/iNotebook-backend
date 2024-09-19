@@ -1,9 +1,11 @@
 import { Router } from 'express';
 const router = Router();
-import { registerUser, loginUser } from '../controllers/userControllers';
+import { registerUser, loginUser, getMyProfile } from '../controllers/userControllers';
+import { protect } from '../middleware/authMiddleware';
 
 // route: /api/user/
-router.route('/register').post(registerUser);
-router.route('/login').post(loginUser);
+router.route('/register-user').post(registerUser);
+router.route('/login-user').post(loginUser);
+router.route('/get-user').get(protect, getMyProfile);
 
-export default router; 
+export default router;
