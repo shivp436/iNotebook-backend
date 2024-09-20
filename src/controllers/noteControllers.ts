@@ -103,9 +103,14 @@ const createNote = async (
       return;
     }
 
-    const { title, content, tags, isPinned } = req.body;
+    const { title, content, tags_string, isPinned } = req.body;
+    let tags = tags_string ? tags_string.split(', ') : [];
 
-    // TODO: Add validation for title, content, tags, isPinned
+    // Validation (optional): Check if required fields are provided
+    if (!title || !content) {
+      respond(res, 400, 'error', 'Title and content are required');
+      return;
+    }
 
     const newNote: INote = {
       title,
@@ -156,7 +161,8 @@ const updateNote = async (
       return;
     }
 
-    const { title, content, tags, isPinned } = req.body;
+    const { title, content, tags_string, isPinned } = req.body;
+    let tags = tags_string ? tags_string.split(', ') : [];
 
     // Validation (optional): Check if required fields are provided
     if (!title || !content) {
@@ -186,12 +192,51 @@ const updateNote = async (
   }
 };
 
+// @desc    Delete a note
+// @route   DELETE /api/v1/notes/delete-note/:id
+// @access  Private
+const deleteNote = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      respond(res, 401, 'error', 'Unauthorized: No User found');
+      return;
+    }
+
+    const note = await Note.findById(req.params.id);
+
+    if (!note) {
+      respond(res, 404, 'error', 'Note not found');
+      return;
+    }
+
+    // Check if note belongs to the user
+    if (note.user.toString() !== req.user._id.toString()) {
+      respond(res, 401, 'error', 'Unauthorized: Note does not belong to user');
+      return;
+    }
+
+    await Note.findByIdAndDelete(req.params.id);
+
+    respond(res, 200, 'success', 'Note deleted successfully', {
+      _note: note,
+      _token: req.newToken,
+    });
+  } catch (error) {
+    respond(res, 500, 'error', 'Server error', {
+      _error: error,
+    });
+  }
+};
+
 export {
   getAllNotes,
   getNote,
   createNote,
   updateNote,
-  // deleteNote,
+  deleteNote,
   // filterNotesByTitle,
   // filterNotesByTag,
 };
