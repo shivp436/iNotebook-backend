@@ -42,6 +42,7 @@ const getAllNotes = async (
       });
       return;
     }
+
     respond(res, 200, 'success', 'Notes fetched successfully', {
       _notes: notes,
       _token: req.newToken,
@@ -103,8 +104,7 @@ const createNote = async (
       return;
     }
 
-    const { title, content, tags_string, isPinned } = req.body;
-    let tags = tags_string ? tags_string.split(', ') : [];
+    const { title, content, tags, isPinned } = req.body;
 
     // Validation (optional): Check if required fields are provided
     if (!title || !content) {
@@ -161,8 +161,7 @@ const updateNote = async (
       return;
     }
 
-    const { title, content, tags_string, isPinned } = req.body;
-    let tags = tags_string ? tags_string.split(', ') : [];
+    const { title, content, tags, isPinned } = req.body;
 
     // Validation (optional): Check if required fields are provided
     if (!title || !content) {
