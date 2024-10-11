@@ -6,6 +6,7 @@ import cors from 'cors';
 // routes import
 import userRoutes from './routes/userRoutes';
 import noteRoutes from './routes/noteRoutes';
+import authRoutes from './routes/authRoutes';
 
 dotenv.config();
 connectDB();
@@ -36,6 +37,7 @@ app.get('/', (req: Request, res: Response) => {
 // routes
 app.use('/i-notebook/api/v1/note', noteRoutes);
 app.use('/i-notebook/api/v1/user', userRoutes);
+app.use('/i-notebook/api/v1/auth', authRoutes);
 // app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(port, () => {

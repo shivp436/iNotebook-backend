@@ -10,68 +10,62 @@ interface AuthenticatedRequest extends Request {
   newToken?: string | undefined;
 }
 
+// Extract token from headers and verify it
+const verifyToken = async (req: AuthenticatedRequest): Promise<any> => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith('Bearer')) {
+    const token = authHeader.split(' ')[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+        id: string;
+        iat: number;
+        exp: number;
+      };
+
+      const user = await User.findById(decoded.id).select('-password');
+      if (!user) return null;
+
+      return { user, token, expirationTime: decoded.exp };
+    } catch (error) {
+      return null;
+    }
+  }
+  return null;
+};
+
 const protect = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    let token: string | undefined;
+    // Verify the token and extract user info
+    const tokenData = await verifyToken(req);
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      try {
-        token = req.headers.authorization.split(' ')[1];
-        if (!token) {
-          respond(res, 401, 'error', 'Not authorized, no token');
-          return;
-        }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-          id: string;
-          iat: number;
-          exp: number;
-        };
-
-        const user = await User.findById(decoded.id).select('-password');
-        if (!user) {
-          respond(res, 404, 'error', 'User not found with this token');
-          return;
-        }
-
-        const currentTime = Math.floor(Date.now() / 1000);
-        const expirationTime = decoded.exp;
-        const twoDaysInSeconds = 2 * 24 * 60 * 60;
-
-        if (expirationTime - currentTime <= twoDaysInSeconds) {
-          const newToken = generateToken(
-            (user._id as unknown as string).toString()
-          );
-          // only if the token is about to expire in 2 days, send a new token
-          req.newToken = newToken;
-        } else {
-          req.newToken = token;
-        }
-
-        req.user = user;
-        next();
-      } catch (error) {
-        if (error instanceof jwt.TokenExpiredError) {
-          respond(
-            res,
-            401,
-            'error',
-            'Not authorized, token expired. Login again'
-          );
-          return;
-        } else {
-          respond(res, 401, 'error', 'Not authorized, token failed');
-          return;
-        }
-      }
-    } else {
-      respond(res, 401, 'error', 'Not authorized, no token');
-      return;
+    if (!tokenData) {
+      return respond(
+        res,
+        401,
+        'error',
+        'Not authorized, no token or token invalid'
+      );
     }
+
+    const { user, token, expirationTime } = tokenData;
+
+    const currentTime = Math.floor(Date.now() / 1000);
+    const twoDaysInSeconds = 2 * 24 * 60 * 60;
+
+    // Check if the token is expiring soon and generate a new one if needed
+    if (expirationTime - currentTime <= twoDaysInSeconds) {
+      const newToken = generateToken(
+        (user._id as unknown as string).toString()
+      );
+      req.newToken = newToken; // Send new token in the response if needed
+    } else {
+      req.newToken = token; // If token is still valid, keep the current one
+    }
+
+    req.user = user;
+    next();
   }
 );
 
-export { protect };
+export { protect, verifyToken };
